@@ -1,0 +1,11 @@
+[build]
+builder = "nixpacks"
+buildCommand = "npm run build --workspace=@salestrack/api"
+
+[deploy]
+startCommand = "npm run start --workspace=@salestrack/api"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[environments.production]
+NODE_ENV = "production"

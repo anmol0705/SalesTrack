@@ -2,16 +2,28 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "ES2022"],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "module": "esnext",
     "moduleResolution": "bundler",
     "jsx": "preserve",
+    "noEmit": true,
     "incremental": true,
     "plugins": [{ "name": "next" }],
+    "types": ["node"],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"],
+      "@salestrack/types": ["../../packages/types/src"],
+      "@salestrack/types/*": ["../../packages/types/src/*"],
+      "@salestrack/utils": ["../../packages/utils/src"],
+      "@salestrack/utils/*": ["../../packages/utils/src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

@@ -89,30 +89,7 @@ CREATE TRIGGER trg_retailers_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ---------------------------------------------------------------------------
--- 4. products
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS products (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id     UUID NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
-  name       TEXT NOT NULL,
-  sku        TEXT NOT NULL,
-  unit       TEXT NOT NULL
-               CHECK (unit IN ('piece', 'box', 'kg', 'litre', 'dozen')),
-  price      NUMERIC(10, 2) NOT NULL,
-  is_active  BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE (org_id, sku)
-);
-
-CREATE INDEX idx_products_org_id ON products (org_id);
-
-CREATE TRIGGER trg_products_updated_at
-  BEFORE UPDATE ON products
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- ---------------------------------------------------------------------------
--- 5. beat_plans
+-- 4. beat_plans
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS beat_plans (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -135,7 +112,7 @@ CREATE TRIGGER trg_beat_plans_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ---------------------------------------------------------------------------
--- 6. beat_plan_retailers
+-- 5. beat_plan_retailers
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS beat_plan_retailers (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -217,20 +194,20 @@ CREATE TRIGGER trg_orders_updated_at
 -- 9. order_items
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS order_items (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id      UUID NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
-  order_id    UUID NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
-  product_id  UUID NOT NULL REFERENCES products (id),
-  quantity    NUMERIC(10, 2) NOT NULL,
-  unit_price  NUMERIC(10, 2) NOT NULL,
-  total_price NUMERIC(10, 2) NOT NULL,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id           UUID NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
+  order_id         UUID NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
+  item_description TEXT NOT NULL,
+  unit             TEXT NOT NULL DEFAULT 'piece',
+  quantity         NUMERIC(10, 2) NOT NULL,
+  unit_price       NUMERIC(10, 2) NOT NULL,
+  total_price      NUMERIC(10, 2) NOT NULL,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_order_items_org_id     ON order_items (org_id);
-CREATE INDEX idx_order_items_order_id   ON order_items (order_id);
-CREATE INDEX idx_order_items_product_id ON order_items (product_id);
+CREATE INDEX idx_order_items_org_id   ON order_items (org_id);
+CREATE INDEX idx_order_items_order_id ON order_items (order_id);
 
 CREATE TRIGGER trg_order_items_updated_at
   BEFORE UPDATE ON order_items
@@ -277,7 +254,6 @@ CREATE TRIGGER trg_payments_updated_at
 ALTER TABLE organisations       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users               ENABLE ROW LEVEL SECURITY;
 ALTER TABLE retailers           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE products            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE beat_plans          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE beat_plan_retailers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE visits              ENABLE ROW LEVEL SECURITY;
@@ -327,21 +303,6 @@ CREATE POLICY "retailers_update" ON retailers
   FOR UPDATE USING (org_id = auth_org_id());
 
 CREATE POLICY "retailers_delete" ON retailers
-  FOR DELETE USING (org_id = auth_org_id());
-
--- ---------------------------------------------------------------------------
--- RLS Policies — products
--- ---------------------------------------------------------------------------
-CREATE POLICY "products_select" ON products
-  FOR SELECT USING (org_id = auth_org_id());
-
-CREATE POLICY "products_insert" ON products
-  FOR INSERT WITH CHECK (org_id = auth_org_id());
-
-CREATE POLICY "products_update" ON products
-  FOR UPDATE USING (org_id = auth_org_id());
-
-CREATE POLICY "products_delete" ON products
   FOR DELETE USING (org_id = auth_org_id());
 
 -- ---------------------------------------------------------------------------

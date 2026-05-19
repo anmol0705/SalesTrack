@@ -1,0 +1,14 @@
+node_modules
+.next
+dist
+build
+.expo
+*.log
+coverage
+.env
+.env.local
+apps/dashboard/.next
+apps/api/dist
+packages/*/dist
+**/*.map
+**/.DS_Store

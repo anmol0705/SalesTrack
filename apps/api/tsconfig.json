@@ -2,7 +2,14 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "../..",
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@salestrack/types": ["../../packages/types/src"],
+      "@salestrack/types/*": ["../../packages/types/src/*"],
+      "@salestrack/utils": ["../../packages/utils/src"],
+      "@salestrack/utils/*": ["../../packages/utils/src/*"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
