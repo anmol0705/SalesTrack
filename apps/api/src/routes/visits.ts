@@ -20,18 +20,23 @@ const CheckoutSchema = z.object({
 
 // GET /api/visits/today — must be defined before /:id
 router.get('/today', async (req: Request, res: Response) => {
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
+  // Use IST day boundaries (UTC+5:30) so agents in India see their full workday
+  const ISToffset = 5.5 * 60 * 60 * 1000;
+  const nowIST = new Date(Date.now() + ISToffset);
+  const startIST = new Date(nowIST);
+  startIST.setUTCHours(0, 0, 0, 0);
+  const endIST = new Date(nowIST);
+  endIST.setUTCHours(23, 59, 59, 999);
+  const todayStart = new Date(startIST.getTime() - ISToffset).toISOString();
+  const todayEnd = new Date(endIST.getTime() - ISToffset).toISOString();
 
   const { data, error } = await supabaseAdmin
     .from('visits')
     .select('*, retailer:retailers(id, name, phone, area)')
     .eq('org_id', req.orgId)
     .eq('agent_id', req.user.id)
-    .gte('check_in_time', todayStart.toISOString())
-    .lte('check_in_time', todayEnd.toISOString())
+    .gte('check_in_time', todayStart)
+    .lte('check_in_time', todayEnd)
     .order('check_in_time', { ascending: false });
 
   if (error) throw error;

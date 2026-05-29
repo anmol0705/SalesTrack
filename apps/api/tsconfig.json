@@ -4,6 +4,8 @@
     "outDir": "dist",
     "rootDir": "../..",
     "ignoreDeprecations": "6.0",
+    "types": ["node"],
+    "typeRoots": ["../../node_modules/@types", "./node_modules/@types"],
     "paths": {
       "@salestrack/types": ["../../packages/types/src"],
       "@salestrack/types/*": ["../../packages/types/src/*"],

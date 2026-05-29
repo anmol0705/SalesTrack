@@ -6,6 +6,7 @@ import type {
   BeatPlan,
   Visit,
   Order,
+  OrderItem,
   Payment,
   User,
 } from '@salestrack/types';
@@ -61,20 +62,65 @@ export interface AgentActivity {
 }
 
 export interface DashboardAnalytics {
-  visits_planned: number;
-  visits_completed: number;
-  orders_value_today: number;
-  collections_today: number;
-  active_agents_count: number;
-  agents: AgentActivity[];
+  date: string;
+  visits: { planned: number; completed: number };
+  orders: { value: number };
+  collections: { total: number };
+  active_agents: number;
 }
 
 export interface AgentStats {
-  agent: User;
-  visits_count: number;
-  orders_count: number;
-  orders_value: number;
-  collections: number;
+  agent_id: string;
+  period: { from: string; to: string };
+  visits: { completed: number; total: number };
+  orders: { count: number; value: number };
+  payments: { collected: number };
+}
+
+// ─── Extended joined types (API includes related rows via select()) ────────────
+
+export interface BeatPlanStop {
+  id: string;
+  sequence_order: number;
+  is_visited: boolean;
+  retailer_id: string;
+  retailer: {
+    id: string;
+    name: string;
+    owner_name: string;
+    phone: string;
+    area: string;
+    city: string;
+    outstanding_balance: number;
+    latitude: number | null;
+    longitude: number | null;
+  };
+}
+
+export interface BeatPlanWithDetail extends BeatPlan {
+  assigned_agent: { id: string; full_name: string; phone: string };
+  beat_plan_retailers: BeatPlanStop[];
+}
+
+export interface VisitWithRelations extends Visit {
+  retailer: { id: string; name: string; phone: string; area: string };
+  agent: { id: string; full_name: string };
+}
+
+export interface PaymentWithRelations extends Payment {
+  retailer: { id: string; name: string; phone: string };
+  agent: { id: string; full_name: string };
+}
+
+export interface OrderWithRelations extends Order {
+  retailer: { id: string; name: string };
+  agent: { id: string; full_name: string };
+}
+
+export interface OrderDetail extends Order {
+  retailer: { id: string; name: string; phone: string };
+  agent: { id: string; full_name: string };
+  order_items: OrderItem[];
 }
 
 // ─── Axios instance ───────────────────────────────────────────────────────────
@@ -161,7 +207,7 @@ export const api = {
       request<BeatPlan[]>(() => http.get('/api/beat-plans', { params })),
 
     get: (id: string) =>
-      request<BeatPlan>(() => http.get(`/api/beat-plans/${id}`)),
+      request<BeatPlanWithDetail>(() => http.get(`/api/beat-plans/${id}`)),
 
     create: (data: {
       name: string;
@@ -172,24 +218,38 @@ export const api = {
 
     reorder: (id: string, retailer_ids: string[]) =>
       request<void>(() => http.put(`/api/beat-plans/${id}/reorder`, { retailer_ids })),
+
+    updateStatus: (id: string, status: string) =>
+      request<BeatPlan>(() => http.put(`/api/beat-plans/${id}`, { status })),
   },
 
   visits: {
     list: (params?: { agent_id?: string; date?: string }) =>
-      request<Visit[]>(() => http.get('/api/visits', { params })),
+      request<VisitWithRelations[]>(() => http.get('/api/visits', { params })),
 
     today: () =>
-      request<Visit[]>(() => http.get('/api/visits/today')),
+      request<VisitWithRelations[]>(() => http.get('/api/visits/today')),
   },
 
   orders: {
     list: (params?: { agent_id?: string; retailer_id?: string; status?: string }) =>
-      request<Order[]>(() => http.get('/api/orders', { params })),
+      request<OrderWithRelations[]>(() => http.get('/api/orders', { params })),
+
+    get: (id: string) =>
+      request<OrderDetail>(() => http.get(`/api/orders/${id}`)),
+
+    updateStatus: (id: string, status: 'confirmed' | 'cancelled') =>
+      request<Order>(() => http.put(`/api/orders/${id}/status`, { status })),
   },
 
   payments: {
-    list: (params?: { agent_id?: string; retailer_id?: string }) =>
-      request<Payment[]>(() => http.get('/api/payments', { params })),
+    list: (params?: {
+      agent_id?: string;
+      retailer_id?: string;
+      status?: string;
+      date?: string;
+    }) =>
+      request<PaymentWithRelations[]>(() => http.get('/api/payments', { params })),
 
     create: (data: {
       visit_id: string;
@@ -197,7 +257,13 @@ export const api = {
       amount: number;
       method: 'cash' | 'cheque' | 'upi';
       reference_number?: string;
-    }) => request<Payment>(() => http.post('/api/payments', data)),
+    }) =>
+      request<{ payment: Payment; whatsapp_link: string }>(() =>
+        http.post('/api/payments', data),
+      ),
+
+    confirm: (id: string) =>
+      request<Payment>(() => http.put(`/api/payments/${id}/confirm`, {})),
   },
 
   analytics: {

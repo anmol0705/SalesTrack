@@ -3,14 +3,26 @@ import { supabaseAdmin } from '../config/supabase';
 
 const router = Router();
 
+// Compute IST "today" boundaries as UTC timestamps.
+// Supabase stores all timestamps in UTC; IST = UTC+5:30.
+// A naive UTC-midnight filter misses the first 5.5 h of the IST day.
+function istDayBounds(): { start: string; end: string } {
+  const ISToffset = 5.5 * 60 * 60 * 1000;
+  const now = new Date();
+  const nowIST = new Date(now.getTime() + ISToffset);
+  const startIST = new Date(nowIST);
+  startIST.setUTCHours(0, 0, 0, 0);
+  const endIST = new Date(nowIST);
+  endIST.setUTCHours(23, 59, 59, 999);
+  return {
+    start: new Date(startIST.getTime() - ISToffset).toISOString(),
+    end: new Date(endIST.getTime() - ISToffset).toISOString(),
+  };
+}
+
 // GET /api/analytics/dashboard — owner summary for today
 router.get('/dashboard', async (req: Request, res: Response) => {
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
-  const start = todayStart.toISOString();
-  const end = todayEnd.toISOString();
+  const { start, end } = istDayBounds();
 
   const [visitsResult, ordersResult, paymentsResult, agentsResult] = await Promise.all([
     supabaseAdmin
@@ -59,7 +71,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
   res.json({
     success: true,
     data: {
-      date: todayStart.toISOString().split('T')[0],
+      date: new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0],
       visits: { planned: visitsPlanned, completed: visitsCompleted },
       orders: { value: Math.round(ordersValue * 100) / 100 },
       collections: { total: Math.round(collectionsTotal * 100) / 100 },
@@ -71,14 +83,22 @@ router.get('/dashboard', async (req: Request, res: Response) => {
 // GET /api/analytics/agent/:id — agent performance for a date range
 router.get('/agent/:id', async (req: Request, res: Response) => {
   const agentId = req.params['id'];
-  const today = new Date().toISOString().split('T')[0] as string;
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] as string;
+  const ISToffset = 5.5 * 60 * 60 * 1000;
+  const todayIST = new Date(Date.now() + ISToffset).toISOString().split('T')[0] as string;
+  const sevenDaysAgoIST = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + ISToffset)
+    .toISOString()
+    .split('T')[0] as string;
 
-  const from = typeof req.query['from'] === 'string' ? req.query['from'] : sevenDaysAgo;
-  const to = typeof req.query['to'] === 'string' ? req.query['to'] : today;
+  const from = typeof req.query['from'] === 'string' ? req.query['from'] : sevenDaysAgoIST;
+  const to = typeof req.query['to'] === 'string' ? req.query['to'] : todayIST;
 
-  const fromTs = `${from}T00:00:00.000Z`;
-  const toTs = `${to}T23:59:59.999Z`;
+  // Convert IST day boundaries to UTC for Supabase queries
+  const fromTs = new Date(
+    new Date(`${from}T00:00:00.000Z`).getTime() - ISToffset,
+  ).toISOString();
+  const toTs = new Date(
+    new Date(`${to}T23:59:59.999Z`).getTime() - ISToffset,
+  ).toISOString();
 
   const [visitsResult, ordersResult, paymentsResult] = await Promise.all([
     supabaseAdmin

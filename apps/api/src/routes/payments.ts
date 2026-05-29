@@ -28,7 +28,7 @@ router.get('/', async (req: Request, res: Response) => {
 
   let query = supabaseAdmin
     .from('payments')
-    .select('*, retailer:retailers(id, name), agent:users(id, full_name)')
+    .select('*, retailer:retailers(id, name, phone), agent:users(id, full_name)')
     .eq('org_id', req.orgId)
     .order('created_at', { ascending: false });
 

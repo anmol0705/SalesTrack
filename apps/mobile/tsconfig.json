@@ -11,9 +11,14 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "noEmit": true,
+    "incremental": false,
+    "baseUrl": ".",
     "paths": {
+      "@/*": ["./src/*"],
       "@salestrack/types": ["../../packages/types/src"],
-      "@salestrack/utils": ["../../packages/utils/src"]
+      "@salestrack/types/*": ["../../packages/types/src/*"],
+      "@salestrack/utils": ["../../packages/utils/src"],
+      "@salestrack/utils/*": ["../../packages/utils/src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],

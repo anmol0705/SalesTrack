@@ -1,0 +1,6 @@
+[mcp_servers.sequential-thinking]
+args = ["@modelcontextprotocol/server-sequential-thinking"]
+command = "npx"
+
+[mcp_servers.supabase]
+command = "npx @supabase/mcp-server-supabase --access-token YOUR_SUPABASE_PAT"

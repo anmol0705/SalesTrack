@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "SalesTrack Agent",
+    "slug": "salestrack-agent",
+    "version": "1.0.0",
+    "scheme": "salestrack",
+    "platforms": ["android", "ios"],
+    "android": {
+      "package": "com.salestrack.agent",
+      "adaptiveIcon": {
+        "backgroundColor": "#1D9E75"
+      }
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "root": "./src/app"
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "SalesTrack needs location to verify your visits."
+        }
+      ]
+    ]
+  }
+}

@@ -43,6 +43,7 @@ router.post('/signup', async (req: Request, res: Response) => {
     email,
     password,
     email_confirm: true,
+    user_metadata: { full_name },
   });
   if (authError || !authData.user) {
     res.status(400).json({ success: false, error: authError?.message ?? 'Failed to create user' });
@@ -146,7 +147,7 @@ router.post(
     // Create the invited auth user first to get their ID
     const { data: inviteData, error: inviteError } =
       await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        data: { org_id: req.orgId, role },
+        data: { org_id: req.orgId, role, full_name },
       });
     if (inviteError || !inviteData.user) {
       res.status(400).json({

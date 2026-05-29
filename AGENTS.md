@@ -27,17 +27,8 @@ packages/types  → shared TypeScript interfaces
 packages/utils  → formatCurrency, formatDate, generateWhatsAppReceiptLink
 
 ## Current status
-COMPLETE — Ready for deployment and E2E testing.
-Sessions 1–7 complete. Full owner + agent workflow built end-to-end.
-
-### Completed features
-- Beat plan status management (draft → active → completed) with DropdownMenu in list + detail
-- Beat plan detail view (/beat-plans/[id]) with live progress, retailer sequence, outstanding balances
-- Mobile visit checkout flow (outcome pills + notes modal, calls PUT /api/visits/:id/checkout)
-- Payments page with WhatsApp receipt link generation from frontend utility
-- Orders/visits pages show agent names and retailer names (joined data, not UUIDs)
-- Analytics IST timezone fix — all "today" queries use UTC+5:30 day boundaries
-- Mobile loading/error/empty states on today route screen
+Sessions 1–6 complete. Full agent workflow built:
+login → today's route → GPS check-in → order entry → payment collection → visit checkout.
 
 ### Dashboard scaffold (Session 4–5)
 - shadcn v4, style radix-nova, Tailwind v4 CSS-first (no tailwind.config.js)
@@ -46,17 +37,15 @@ Sessions 1–7 complete. Full owner + agent workflow built end-to-end.
 - src/lib/api.ts — Axios instance, Bearer interceptor, 401→/login redirect, typed API
 - src/store/auth.ts — Zustand store, manual localStorage, JWT exp check in hydrate()
 - src/providers/query-provider.tsx — React Query, staleTime 30s, no refetchOnWindowFocus
-- Pages built: /login, /signup, /dashboard, /beat-plans, /beat-plans/new, /beat-plans/[id],
-  /retailers, /agents, /visits, /payments, /orders (with Sheet detail panel)
+- Pages built: /login, /signup, /dashboard, /beat-plans, /beat-plans/new, /retailers,
+  /agents, /visits, /payments, /orders (with Sheet detail panel)
 - Shared components: EmptyState, LeafletMap
-- shadcn components: button, input, label, card, dialog, dropdown-menu, select, sheet,
-  skeleton, sonner, table, navigation-menu, form, badge, avatar
+- API additions: GET /api/auth/users?role=, PUT /api/payments/:id/confirm (phone in list select)
 - ThemeProvider (next-themes 0.4.6) incompatible with React 19 children — removed; light mode only
 - FormData is a reserved browser global — use FormValues as the local type alias
 - z.preprocess conflicts with exactOptionalPropertyTypes — use z.string().optional() + manual Number() cast
 - Droppable/Draggable render-prop `provided` needs explicit DroppableProvided/DraggableProvided types
 - Sheet onOpenChange param needs explicit `(open: boolean)` type annotation
-- Next.js 16: params in server page.tsx is a Promise — must await params before use
 
 ### Mobile scaffold (Sessions 5–6)
 - Expo SDK 52, expo-router ~4.0, React Native 0.76
@@ -67,9 +56,9 @@ Sessions 1–7 complete. Full owner + agent workflow built end-to-end.
 - Screens: index (auth guard), (auth)/login, (tabs)/index (today route),
   (tabs)/visits, (tabs)/payments, (tabs)/order (order entry, hidden tab)
 - Today screen: GPS via expo-location.getCurrentPositionAsync before check-in
-- Check-in → navigates to /(tabs)/order after GPS stamp; order screen hidden via href: null
-- Checkout modal: outcome pills (visited/not_available/refused) + notes, calls api.visits.checkout
-- TypeScript: 0 errors across all 5 packages (api, dashboard, mobile, types, utils)
+- Check-in → navigates to /(tabs)/order after GPS stamp; order screen hidden from tab bar via href: null
+- TypeScript: 0 errors across api, utils, dashboard packages (mobile tsc has structural
+  npm workspace conflict — React 18 vs 19 types — but Metro builds are unaffected)
 - Physical Android: API at 192.168.1.80:4000 via EXPO_PUBLIC_API_URL in .env
 
-Next: Session 8 — Railway + Vercel deployment, APK build, first client onboarding.
+Next: Session 7 — Railway + Vercel deployment, APK build, first client onboarding.

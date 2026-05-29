@@ -50,7 +50,7 @@ router.get('/:id', async (req: Request, res: Response) => {
   const { data, error } = await supabaseAdmin
     .from('beat_plans')
     .select(
-      '*, assigned_agent:users(id, full_name, phone), beat_plan_retailers(*, retailer:retailers(id, name, owner_name, phone, area, city))',
+      '*, assigned_agent:users(id, full_name, phone), beat_plan_retailers(*, retailer:retailers(id, name, owner_name, phone, area, city, outstanding_balance, latitude, longitude))',
     )
     .eq('id', req.params['id'])
     .eq('org_id', req.orgId)
